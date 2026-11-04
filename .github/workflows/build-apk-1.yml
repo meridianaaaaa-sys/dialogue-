@@ -25,17 +25,25 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Find and Build APK
+      - name: Generate Gradle Wrapper if missing
         run: |
-          GRADLEW_PATH=$(find . -name gradlew -print -quit)
-          if [ -z "$GRADLEW_PATH" ]; then
-            echo "Error: gradlew not found in any directory!"
+          # Ищем папку, где лежит файл build.gradle
+          BUILD_GRADLE_PATH=$(find . -name build.gradle -print -quit)
+          if [ -z "$BUILD_GRADLE_PATH" ]; then
+            echo "Error: build.gradle not found in any directory!"
             exit 1
           fi
-          PROJECT_DIR=$(dirname "$GRADLEW_PATH")
-          echo "Found gradlew in $PROJECT_DIR"
-          chmod +x "$GRADLEW_PATH"
+          PROJECT_DIR=$(dirname "$BUILD_GRADLE_PATH")
+          echo "Found project directory: $PROJECT_DIR"
           cd "$PROJECT_DIR"
+          
+          # Если файла gradlew нет, создаем его
+          if [ ! -f ./gradlew ]; then
+            echo "gradlew not found. Generating gradle wrapper..."
+            gradle wrapper
+          fi
+          
+          chmod +x ./gradlew
           ./gradlew assembleRelease
 
       - name: Upload APK Artifact
