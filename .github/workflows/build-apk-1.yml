@@ -1,40 +1,38 @@
-name: Build APK
+name: Build Android APK
+
 on:
   push:
-  workflow_dispatch:
-permissions:
-  contents: write
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Распаковать dialogue-android.zip (если проект загружен архивом)
-        run: |
-          if [ -f dialogue-android.zip ] && [ ! -f settings.gradle ]; then
-            unzip -q dialogue-android.zip -d _proj
-            shopt -s dotglob; mv _proj/dialogue-android/* . 2>/dev/null || mv _proj/* .
-          fi
-          ls
-      - uses: actions/setup-java@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'zulu'
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
         with:
-          gradle-version: '8.7'
-      - name: Сборка release APK
-        run: gradle --no-daemon assembleRelease
-      - name: Переименовать APK
-        run: cp app/build/outputs/apk/release/*.apk Dialogue.apk
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Dialogue-apk
-          path: Dialogue.apk
-      - name: Опубликовать в Releases
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: build-${{ github.run_number }}
-          name: Dialogue build ${{ github.run_number }}
-          files: Dialogue.apk
+          name: app-release-apk
+          path: app/build/outputs/apk/release/*.apk
