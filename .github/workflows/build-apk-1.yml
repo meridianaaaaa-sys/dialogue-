@@ -12,6 +12,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: ./dialogue-android
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -35,4 +39,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: app/build/outputs/apk/release/*.apk
+          path: dialogue-android/app/build/outputs/apk/release/*.apk
